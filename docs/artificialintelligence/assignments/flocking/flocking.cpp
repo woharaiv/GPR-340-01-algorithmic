@@ -102,17 +102,30 @@ struct Cohesion {
 
   Vector2 ComputeForce(const vector<Boid>& boids, int boidAgentIndex) {
     Vector2 centerOfMass = {0,0};
-    double radSquared = radius * radius;
+    //Comparing the square of the distance to the square of the radius skips slow square root math.
+    const double radSquared = radius * radius;
     int boidsInRadius = 0;
     const Boid* targetBoid = &boids.at(boidAgentIndex);
+
+    //Iterate over each boid in the scene
     for (int i = 0; i < boids.size(); ++i) {
+      //If the boid is in the cohesion radius, add its position to the center of mass calculation 
       if(boids.at(i).position.DistanceSquared(targetBoid->position) < radSquared) {
         centerOfMass += boids.at(i).position;
         boidsInRadius++;
       }
     }
+    //Average the total positions by the number of boids who contributed to the total position to
+    //get the center of mass
     centerOfMass /= boidsInRadius;
-    return (centerOfMass - targetBoid->position) * k;
+    //If the center of mass is outside the radius, return 0 instead.
+    //I don't think this should even be possible, but it's called out in the assignment.
+    if(centerOfMass.DistanceSquared(targetBoid->position) > radSquared) {
+      return {0,0};
+    }
+    //The strength of the cohesion vector is inversely proportional to the radius,
+    //and then scaled by k.
+    return (centerOfMass - targetBoid->position) * (k/radius);
   }
 };
 
@@ -123,7 +136,22 @@ struct Alignment {
   Alignment() = default;
 
   Vector2 ComputeForce(const vector<Boid>& boids, int boidAgentIndex) {
-    return {};
+    Vector2 averageVelocity = {0,0};
+    //Comparing the square of the distance to the square of the radius skips slow square root math.
+    const double radSquared = radius * radius;
+    int boidsInRadius = 0;
+    const Boid* targetBoid = &boids.at(boidAgentIndex);
+
+    //Iterate over each boid in the scene
+    for (int i = 0; i < boids.size(); ++i) {
+      //If the boid is in the alignment radius, add its velocity to the average calculation.
+      if(boids.at(i).position.DistanceSquared(targetBoid->position) < radSquared) {
+        averageVelocity += boids.at(i).velocity;
+        boidsInRadius++;
+      }
+    }
+    //Average the total velocity of the boids in the radius by how many are in the radius
+    return averageVelocity / boidsInRadius;
   }
 };
 
@@ -135,7 +163,35 @@ struct Separation {
   Separation() = default;
 
   Vector2 ComputeForce(const vector<Boid>& boids, int boidAgentIndex) {
-    return {};
+    Vector2 separationVector = {0,0};
+    Vector2 vecToBoid = {0,0};
+    double distToBoid = 0;
+    const double radSquared = radius * radius;
+    int boidsInRadius = 0;
+    const Boid* targetBoid = &boids.at(boidAgentIndex);
+
+    //Iterate over each boid in the scene
+    for (int i = 0; i < boids.size(); ++i) {
+      //Calculate the target boid's distance to this one
+      vecToBoid = boids.at(i).position - targetBoid->position;
+      //If the distance is 0, it'll cause errors in the math later, so don't calculate this boid.
+      if(vecToBoid.x == vecToBoid.y == 0)
+        continue;
+
+      distToBoid = vecToBoid.getMagnitude();
+      //If the boid is in the separation radius, add its position to the separation vector,
+      //scaled by how close that boid is to the target.
+      if(distToBoid < radius) {
+        separationVector += vecToBoid.normalized()/distToBoid;
+        boidsInRadius++;
+      }
+    }
+    //If the total force is greater than the max force, clamp it to the max force.
+    //Squaring max force to avoid using square root
+    if(separationVector.sqrMagnitude() > (maxForce * maxForce))
+      return separationVector.normalized() * maxForce;
+    else
+      return separationVector;
   }
 };
 
