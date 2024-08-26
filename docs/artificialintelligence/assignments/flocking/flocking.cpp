@@ -101,7 +101,18 @@ struct Cohesion {
   Cohesion() = default;
 
   Vector2 ComputeForce(const vector<Boid>& boids, int boidAgentIndex) {
-    return {};
+    Vector2 centerOfMass = {0,0};
+    double radSquared = radius * radius;
+    int boidsInRadius = 0;
+    const Boid* targetBoid = &boids.at(boidAgentIndex);
+    for (int i = 0; i < boids.size(); ++i) {
+      if(boids.at(i).position.DistanceSquared(targetBoid->position) < radSquared) {
+        centerOfMass += boids.at(i).position;
+        boidsInRadius++;
+      }
+    }
+    centerOfMass /= boidsInRadius;
+    return (centerOfMass - targetBoid->position) * k;
   }
 };
 
