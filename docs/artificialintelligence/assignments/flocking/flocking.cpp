@@ -149,6 +149,8 @@ int main() {
   }
   // Final input reading and processing
   // todo: edit this. probably my code will be different than yours.
+  //Remove the newline character left in the input stream
+  cin.ignore(256,'\n');
   while (getline(cin, line)) { // game loop
     // Use double buffer! you should read from the current and store changes in the new state.
     currentState = newState;
