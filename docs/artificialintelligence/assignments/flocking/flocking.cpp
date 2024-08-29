@@ -109,7 +109,7 @@ struct Cohesion {
 
     //Iterate over each boid in the scene
     for (int i = 0; i < boids.size(); ++i) {
-      //If the boid is in the cohesion radius, add its position to the center of mass calculation 
+      //If the boid is in the cohesion radius, add its position to the center of mass calculation
       if(boids.at(i).position.DistanceSquared(targetBoid->position) < radSquared) {
         centerOfMass += boids.at(i).position;
         boidsInRadius++;
@@ -214,6 +214,8 @@ int main() {
     currentState.push_back(b);
     newState.push_back(b);
   }
+  //Remove the newline character left in the input stream
+  cin.ignore(256,'\n');
   // Final input reading and processing
   // todo: edit this. probably my code will be different than yours.
   while (getline(cin, line)) { // game loop
