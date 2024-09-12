@@ -5,17 +5,162 @@ using namespace std;
 
 struct Board {
   vector<bool> board;
-  int width, height;
+  int width = 0;
+  int height = 0;
+  Board(int width_, int height_) {
+    width = width_;
+    height = height_;
+    board.resize(width * height, false);
+  }
+public:
+  int GetWidth() { return width; }
+  int GetHeight() { return height; }
+
   bool set(int x, int y, bool val) {
+    if(y >= height || x < 0 || y < 0 || x >= width)
+      throw std::invalid_argument("Position is out of bounds");
     return (board[y * width + x] = val);
   }
+  bool get(int x, int y) {
+    if(y >= height || x < 0 || y < 0 || x >= width)
+      throw std::invalid_argument("Position is out of bounds");
+    return board[y * width + x];
+  }
+
+  void SetInitialState() {
+    string rowInput;
+    for(int y = 0; y < width; y++)
+    {
+      cin >> rowInput;
+      //cout << endl;
+      //cout << std::to_string(i) << " ";
+      for(int x = 0; x < height; x++)
+      {
+        switch(rowInput[x])
+        {
+          case '#':
+            set(x, y, true);
+            //cout << "#";
+          break;
+
+          case '.':
+          default:
+            set(x, y, false);
+            //cout << ".";
+          break;
+        }
+      }
+    }
+  }
+
+  int CountNeighbors(int x, int y) {
+    int count = 0;
+    if(y >= height || x < 0 || y < 0 || x >= width)
+      throw std::invalid_argument("Position is out of bounds");
+    int spaceNorth = (y > 0 ? y - 1 : height - 1);
+    int spaceEast = (x < width - 1 ? x + 1 : 0);
+    int spaceSouth = (y < height - 1 ? y + 1 : 0);
+    int spaceWest = (x > 0 ? x - 1 : width - 1);
+
+    //North
+    if(get(x, spaceNorth))
+      count++;
+    //Northeast
+    if(get(spaceEast, spaceNorth))
+        count++;
+    //East
+    if(get(spaceEast, y))
+      count++;
+    //Southeast
+    if(get(spaceEast, spaceSouth))
+      count++;
+    //South
+    if(get(x, spaceSouth))
+      count++;
+    //Southwest
+    if(get(spaceWest, spaceSouth))
+      count++;
+    //West
+    if(get(spaceWest, y))
+      count++;
+    //Northwest
+    if(get(spaceWest, spaceNorth))
+      count++;
+
+    return count;
+  }
+
+  void Print() {
+    for(int y = 0; y < height; y++) {
+      for(int x = 0; x < width; x++) {
+        if(get(x, y))
+          cout << '#';
+        else
+          cout << '.';
+      }
+      cout << endl;
+    }
+  }
+
+  void ConwayStep(Board* buffer, bool printDebug = false) {
+    for(int y = 0; y < height; y++) {
+      for(int x = 0; x < width; x++) {
+        bool initialState = get(x, y);
+        if(printDebug)
+          cout << "Tile (" << to_string(x) << ',' << to_string(y) << ")";
+        switch(CountNeighbors(x, y)) {
+          //Dies of loneliness
+          case 0:
+          case 1:
+            if(printDebug) {
+              if(initialState)
+                cout << " dies of loneliness" << endl;
+              else
+                cout << " remains dead" << endl;
+            }
+            buffer->set(x, y, false);
+          break;
+
+          //Continues to live
+          case 2:
+            if(printDebug) {
+              if(initialState)
+                cout << " continues to live" << endl;
+              else
+                cout << " remains dead" << endl;
+            }
+            buffer->set(x, y, this->get(x,y));
+          break;
+
+          //Neighbors reproduce
+          case 3:
+            if(printDebug) {
+              if(initialState)
+                cout << " continues to live" << endl;
+              else
+                cout << "'s neighbors reproduce'" << endl;
+            }
+            buffer->set(x, y, true);
+          break;
+
+          //Too many neighbors
+          default:
+            if(printDebug) {
+              if(initialState)
+                cout << " dies of overpopulation" << endl;
+              else
+                cout << "remains dead" << endl;
+            }
+            buffer->set(x, y, false);
+          break;
+        }
+      }
+    }
+  }
+
 };
 
-void InitializeBoard(bool**, int, int);
-void PrintBoard(bool**, int, int);
-void SwapBuffer(bool**& board, bool**& buffer);
-void StepBoard(bool**, bool**, int, int);
-int CountNeighbors(bool** board, int checkRow, int checkCol, int totalRows, int totalCols);
+void SwapBuffer(Board*& board, Board*& buffer);
 
 
 int main()
@@ -25,83 +170,24 @@ int main()
   int turns;
 
   cin >> cols >> rows >> turns;
-  bool **board = new bool*[rows];
-  bool **buffer = new bool*[rows];
-  for (int i = 0; i < rows; i++)
-  {
-    board[i] = new bool[cols];
-    buffer[i] = new bool[cols];
-  }
-  InitializeBoard(board, rows, cols);
+  Board *board = new Board(cols, rows);
+  Board *buffer = new Board(cols, rows);
+  board->SetInitialState();
   for(int i = 0; i < turns; i++) {
+    board->ConwayStep(buffer);
     SwapBuffer(board, buffer);
-    StepBoard(board, buffer, rows, cols);
   }
+
   cout << endl;
-  PrintBoard(board, rows, cols);
+  board->Print();
 
   delete board;
   delete buffer;
   return 0;
 }
 
-void InitializeBoard(bool** board, int rows, int cols)
-{
-  string rowInput;
-  for(int i = 0; i < rows; i++)
-  {
-    cin >> rowInput;
-    //cout << endl;
-    //cout << std::to_string(i) << " ";
-    for(int j = 0; j < cols; j++)
-    {
-      switch(rowInput[j])
-      {
-        case '#':
-          board[i][j] = true;
-          //cout << "#";
-          break;
-        case '.':
-        default:
-          board[i][j] = false;
-          //cout << ".";
-          break;
-      }
-    }
-  }
-}
-
-void SwapBuffer(bool**& board, bool**& buffer) {
-  bool** temp = board;
+void SwapBuffer(Board*& board, Board*& buffer) {
+  Board* temp = board;
   board = buffer;
   buffer = temp;
-}
-
-void StepBoard(bool** board, bool** buffer, int rows, int cols) {
-  for(int i = 0; i < rows; i++) {
-    for(int j = 0; j < cols; j++) {
-      //Switch(CountNeighbors(buffer, row, col, totalRows, totalCols))
-      //case 0, 1, 4: board[cell] = false;
-      //case 2: board[cell] = cell;
-      //case 3: board[cell] = true;
-    }
-  }
-}
-
-int CountNeighbors(bool** board, int checkRow, int checkCol, int totalRows, int totalCols) {
-  int count = 0;
-
-  return count;
-}
-
-void PrintBoard(bool** board, int rows, int cols) {
-  for(int i = 0; i < rows; i++) {
-    for(int j = 0; j < cols; j++) {
-      if(board[i][j])
-        cout << '#';
-      else
-        cout << '.';
-    }
-    cout << endl;
-  }
 }
