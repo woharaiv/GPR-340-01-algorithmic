@@ -206,8 +206,7 @@ int main() {
   vector<Boid> currentState, newState;
   // Input Reading
   cin >> cohesion.radius >> separation.radius >> separation.maxForce >> alignment.radius >> cohesion.k >> separation.k >> alignment.k >> numberOfBoids;
-  for (int i = 0; i < numberOfBoids; i++)
-  {
+  for (int i = 0; i < numberOfBoids; i++) {
     Boid b;
     cin >> b.position.x >> b.position.y >> b.velocity.x >> b.velocity.y;
     //cout << "b.y: " << b.y << endl;
