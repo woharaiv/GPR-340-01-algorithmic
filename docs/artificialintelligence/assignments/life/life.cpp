@@ -17,24 +17,24 @@ public:
   int GetHeight() { return height; }
 
   bool set(int x, int y, bool val) {
-    if(y >= height || x < 0 || y < 0 || x >= width)
-      throw std::invalid_argument("Position is out of bounds");
+    if(y > height || x < 0 || y < 0 || x > width)
+      throw std::invalid_argument("Trying to set position (" + to_string(x) + ", " + to_string(y) + "), but board is only " + to_string(width) + "x" + to_string(height));
     return (board[y * width + x] = val);
   }
   bool get(int x, int y) {
-    if(y >= height || x < 0 || y < 0 || x >= width)
-      throw std::invalid_argument("Position is out of bounds");
+    if(y > height || x < 0 || y < 0 || x > width)
+      throw std::invalid_argument("Trying to get position (" + to_string(x) + ", " + to_string(y) + "), but board is only " + to_string(width) + "x" + to_string(height));
     return board[y * width + x];
   }
 
   void SetInitialState() {
     string rowInput;
-    for(int y = 0; y < width; y++)
+    for(int y = 0; y < height; y++)
     {
       cin >> rowInput;
       //cout << endl;
       //cout << std::to_string(i) << " ";
-      for(int x = 0; x < height; x++)
+      for(int x = 0; x < width; x++)
       {
         switch(rowInput[x])
         {
@@ -55,8 +55,8 @@ public:
 
   int CountNeighbors(int x, int y) {
     int count = 0;
-    if(y >= height || x < 0 || y < 0 || x >= width)
-      throw std::invalid_argument("Position is out of bounds");
+    if(y > height || x < 0 || y < 0 || x > width)
+      throw std::invalid_argument("Trying to count neighbors at position (" + to_string(x) + ", " + to_string(y) + "), but board is only " + to_string(width) + "x" + to_string(height));
     int spaceNorth = (y > 0 ? y - 1 : height - 1);
     int spaceEast = (x < width - 1 ? x + 1 : 0);
     int spaceSouth = (y < height - 1 ? y + 1 : 0);
@@ -178,7 +178,6 @@ int main()
     SwapBuffer(board, buffer);
   }
 
-  cout << endl;
   board->Print();
 
   delete board;
